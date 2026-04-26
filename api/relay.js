@@ -1,18 +1,19 @@
-// No export const runtime needed - Vercel handles this via vercel.json
+const AUTH_KEY = "5XBjc4rwezg4wEQwJGPA3nVtNpgi57Ku";  // Change this
 
 export default async function handler(request) {
-  // Handle CORS
+  // Handle CORS preflight
   if (request.method === 'OPTIONS') {
     return new Response(null, {
       status: 204,
       headers: {
         'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+        'Access-Control-Allow-Methods': 'POST, OPTIONS',
         'Access-Control-Allow-Headers': 'Content-Type, X-Auth-Key',
       },
     });
   }
 
+  // Only accept POST
   if (request.method !== 'POST') {
     return new Response(JSON.stringify({ error: 'Method not allowed' }), {
       status: 405,
@@ -21,14 +22,10 @@ export default async function handler(request) {
   }
 
   try {
-    const body = await request.json();
-    const { method, url, headers = {}, auth } = body;
+    const { method, url, headers, body, auth } = await request.json();
 
-    // Get auth from header or body
-    const authHeader = request.headers.get('X-Auth-Key');
-    const AUTH_KEY = process.env.AUTH_KEY || "5XBjc4rwezg4wEQwJGPA3nVtNpgi57Ku";
-    
-    if (auth !== AUTH_KEY && authHeader !== AUTH_KEY) {
+    // Check authentication
+    if (auth !== AUTH_KEY) {
       return new Response(JSON.stringify({ error: 'Unauthorized' }), {
         status: 401,
         headers: { 'Content-Type': 'application/json' }
@@ -42,26 +39,20 @@ export default async function handler(request) {
       });
     }
 
-    // Forward the request
-    const fetchOptions = {
+    // Make the request
+    const response = await fetch(url, {
       method: method || 'GET',
-      headers: headers,
-    };
+      headers: headers || {},
+      body: body ? Buffer.from(body, 'base64') : undefined,
+    });
 
-    // Handle body
-    if (body.body) {
-      fetchOptions.body = Buffer.from(body.body, 'base64');
-    }
-
-    const response = await fetch(url, fetchOptions);
     const responseBody = await response.arrayBuffer();
-    
-    // Convert headers to object
     const responseHeaders = {};
     response.headers.forEach((value, key) => {
       responseHeaders[key] = value;
     });
 
+    // Return response
     return new Response(JSON.stringify({
       status: response.status,
       headers: responseHeaders,
@@ -71,7 +62,6 @@ export default async function handler(request) {
     });
 
   } catch (error) {
-    console.error('Relay error:', error);
     return new Response(JSON.stringify({ 
       error: error.message || 'Internal server error' 
     }), {
@@ -79,14 +69,4 @@ export default async function handler(request) {
       headers: { 'Content-Type': 'application/json' }
     });
   }
-}
-
-// Also handle GET for testing
-export async function GET() {
-  return new Response(JSON.stringify({ 
-    status: 'ok', 
-    message: 'Vercel relay is running. Use POST requests to /api/relay' 
-  }), {
-    headers: { 'Content-Type': 'application/json' }
-  });
 }
