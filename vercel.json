@@ -5,6 +5,7 @@
     }
   },
   "buildCommand": null,
-  "outputDirectory": "api",
-  "installCommand": null
+  "outputDirectory": ".",
+  "installCommand": null,
+  "framework": null
 }
