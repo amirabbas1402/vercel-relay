@@ -1,0 +1,10 @@
+{
+  "functions": {
+    "api/relay.js": {
+      "runtime": "edge"
+    }
+  },
+  "buildCommand": null,
+  "outputDirectory": "api",
+  "installCommand": null
+}
