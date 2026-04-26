@@ -3,9 +3,5 @@
     "api/relay.js": {
       "runtime": "edge"
     }
-  },
-  "buildCommand": null,
-  "outputDirectory": ".",
-  "installCommand": null,
-  "framework": null
+  }
 }
