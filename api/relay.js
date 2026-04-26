@@ -1,9 +1,8 @@
 export const runtime = 'edge';
 
-const AUTH_KEY = process.env.AUTH_KEY || "CHANGE_ME_TO_A_RANDOM_SECRET";
+const AUTH_KEY = "5XBjc4rwezg4wEQwJGPA3nVtNpgi57Ku";  // CHANGE THIS
 
 export default async function handler(request) {
-  // Handle CORS preflight
   if (request.method === 'OPTIONS') {
     return new Response(null, {
       status: 204,
@@ -15,62 +14,37 @@ export default async function handler(request) {
     });
   }
 
-  // Only accept POST
   if (request.method !== 'POST') {
-    return new Response(JSON.stringify({ error: 'Method not allowed' }), {
-      status: 405,
-      headers: { 'Content-Type': 'application/json' }
-    });
+    return Response.json({ error: 'Method not allowed' }, { status: 405 });
   }
 
   try {
-    const body = await request.json();
-    const { method, url, headers = {}, auth } = body;
-
-    // Authentication
+    const { method, url, headers, body, auth } = await request.json();
+    
     const authHeader = request.headers.get('X-Auth-Key');
     if (auth !== AUTH_KEY && authHeader !== AUTH_KEY) {
-      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
-        status: 401,
-        headers: { 'Content-Type': 'application/json' }
-      });
+      return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
-
+    
     if (!url) {
-      return new Response(JSON.stringify({ error: 'Missing url' }), {
-        status: 400,
-        headers: { 'Content-Type': 'application/json' }
-      });
+      return Response.json({ error: 'Missing url' }, { status: 400 });
     }
-
-    // Forward the request
+    
     const response = await fetch(url, {
       method: method || 'GET',
-      headers: headers,
-      body: body.body ? Buffer.from(body.body, 'base64') : undefined,
+      headers: headers || {},
+      body: body ? Buffer.from(body, 'base64') : undefined,
     });
-
+    
     const responseBody = await response.arrayBuffer();
-    const responseHeaders = {};
-    response.headers.forEach((value, key) => {
-      responseHeaders[key] = value;
-    });
-
-    return new Response(JSON.stringify({
+    
+    return Response.json({
       status: response.status,
-      headers: responseHeaders,
+      headers: Object.fromEntries(response.headers),
       body: Buffer.from(responseBody).toString('base64'),
-    }), {
-      headers: { 'Content-Type': 'application/json' }
     });
-
+    
   } catch (error) {
-    console.error('Relay error:', error);
-    return new Response(JSON.stringify({ 
-      error: error.message || 'Internal server error' 
-    }), {
-      status: 502,
-      headers: { 'Content-Type': 'application/json' }
-    });
+    return Response.json({ error: error.message }, { status: 502 });
   }
 }
