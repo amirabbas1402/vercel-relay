@@ -1,7 +1,5 @@
 {
-  "functions": {
-    "api/relay.js": {
-      "runtime": "edge"
-    }
-  }
+  "rewrites": [
+    { "source": "/(.*)", "destination": "/api/relay" }
+  ]
 }
