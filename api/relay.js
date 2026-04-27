@@ -1,6 +1,6 @@
 export const config = { runtime: "edge" };
 
-const RELAY_SECRET = process.env.RELAY_SECRET || "";
+const RELAY_SECRET = process.env.RELAY_SECRET || "792401002";
 
 const STRIP_REQ_HEADERS = new Set([
   "host",
